@@ -1,0 +1,9 @@
+{
+  "source": "./src",
+  "destination": "./doc",
+  "manual": {
+    "overview": ["./manual/overview.md"],
+    "usage": ["./manual/usage.md"],
+    "example": ["./manual/example.md"]
+  }
+}
