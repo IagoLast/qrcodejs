@@ -24,11 +24,12 @@ Use it from the html.
     npm i qrcode-reader.js
 
 
-    Use it from the html.
+Use it from the html.
 
-    ```html
-        <script src="node_modules/dist/qrcode.js"></script>
-    ```
+
+  ```html
+      <script src="node_modules/dist/qrcode.js"></script>
+  ```
 
 ## Manually including scripts
   
