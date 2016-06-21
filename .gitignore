@@ -2,4 +2,4 @@
 dist/*.min.js
 .tmp
 node_modules
-
+doc

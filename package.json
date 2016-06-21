@@ -5,7 +5,7 @@
   "main": "dist/qrcode.js",
   "scripts": {
     "test": "gulp test",
-    "doc": "esdoc -c .esdoc.json"
+    "doc": "node node_modules/esdoc/out/src/ESDocCLI.js -c .esdoc.json"
   },
   "keywords": [
     "HTML5",

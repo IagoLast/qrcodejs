@@ -4,7 +4,7 @@ Javascript library to read QR codes in the browser
 
 # Installation
 
-Note: The script creates a grobal variable named QrReader, ina  future versions this library will be compatible with 
+Note: The script creates a grobal variable named QrReader, in future versions this library will be compatible with 
 different module loaders.
 
 ## Using Bower

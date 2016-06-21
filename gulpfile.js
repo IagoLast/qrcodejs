@@ -4,7 +4,7 @@ const serve = require('gulp-serve');
 const babel = require('gulp-babel');
 const del = require('del');
 const uglify = require('gulp-uglify');
-const rename = require("gulp-rename");
+const rename = require('gulp-rename');
 
 
 gulp.task('serve', serve({
