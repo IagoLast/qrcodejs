@@ -39,8 +39,8 @@ export default class QrReader {
     this._context = null;
     this._mediaStream = null;
     this._stopped = false;
-    this._defaultHeight = '240';
-    this._defaultWidth = '320';
+    this._defaultHeight = 480;
+    this._defaultWidth = 640;
     this._facingMode = options.facingMode || 'environment';
     this._startOnCreate = options.startOnCreate || true;
 
@@ -71,7 +71,8 @@ export default class QrReader {
    * Start reading video from the video-camera decoding each frame.
    */
   start() {
-    navigator.getUserMedia({ video: { facingMode: this._facingMode } }, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
+    let constraints = { video: { height: this._defaultHeight, width: this._defaultWidth, facingMode: this._facingMode } };
+    navigator.getUserMedia(constraints, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
   }
 
   /**
