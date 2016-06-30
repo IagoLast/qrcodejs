@@ -6244,8 +6244,8 @@ var QrReader = function () {
     this._context = null;
     this._mediaStream = null;
     this._stopped = false;
-    this._defaultHeight = '240';
-    this._defaultWidth = '320';
+    this._defaultHeight = 480;
+    this._defaultWidth = 640;
     this._facingMode = options.facingMode || 'environment';
     this._startOnCreate = options.startOnCreate || true;
 
@@ -6280,7 +6280,8 @@ var QrReader = function () {
   _createClass(QrReader, [{
     key: 'start',
     value: function start() {
-      navigator.getUserMedia({ video: { facingMode: this._facingMode } }, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
+      var constraints = { video: { height: this._defaultHeight, width: this._defaultWidth, facingMode: this._facingMode } };
+      navigator.getUserMedia(constraints, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
     }
 
     /**
