@@ -1,0 +1,12 @@
+{
+  "coverage": "100%",
+  "expectCount": 6,
+  "actualCount": 6,
+  "files": {
+    "src/qr-code.js": {
+      "expectCount": 6,
+      "actualCount": 6,
+      "undocumentLines": []
+    }
+  }
+}
