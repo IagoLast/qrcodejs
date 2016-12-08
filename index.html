@@ -10,11 +10,11 @@
 <script>
 function onSuccess(data) {
   document.getElementById('video').setAttribute("style", "border: 3px solid #52e250");
-  console.log('Sucess:', data);
+  console.log('Success:', data);
 }
 
 function onError(err) {
-  console.error(err);
+  console.error("Error:", err);
 }
 var qr = new QrReader({
   sucessCallback: onSuccess,
