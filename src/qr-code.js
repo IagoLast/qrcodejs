@@ -102,7 +102,7 @@ export default class QrReader {
   _createContext2D(video) {
     let canvas = document.createElement("canvas");
     canvas.width = video.offsetWidth;
-    canvas.height = video.offsetWidth;
+    canvas.height = video.offsetHeight;
     return canvas.getContext("2d");
   }
 
