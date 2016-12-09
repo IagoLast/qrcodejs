@@ -58,8 +58,8 @@ export default class QrReader {
 
     // Initialize attributes
     this._video = this._createVideoElement(videoSelector);
-    this._width =  this._video.offsetWidth;
-    this._height =  this._video.offsetHeight;
+    this._width =  this._video.clientWidth;
+    this._height =  this._video.clientHeight;
     this._context = this._createContext2D(this._video);
 
     if (this._startOnCreate) {
@@ -101,8 +101,8 @@ export default class QrReader {
    */
   _createContext2D(video) {
     let canvas = document.createElement("canvas");
-    canvas.width = video.offsetWidth;
-    canvas.height = video.offsetHeight;
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
     return canvas.getContext("2d");
   }
 

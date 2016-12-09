@@ -6261,8 +6261,8 @@ var QrReader = function () {
 
     // Initialize attributes
     this._video = this._createVideoElement(videoSelector);
-    this._width = this._video.offsetWidth;
-    this._height = this._video.offsetHeight;
+    this._width = this._video.clientWidth;
+    this._height = this._video.clientHeight;
     this._context = this._createContext2D(this._video);
 
     if (this._startOnCreate) {
@@ -6317,8 +6317,8 @@ var QrReader = function () {
     key: '_createContext2D',
     value: function _createContext2D(video) {
       var canvas = document.createElement("canvas");
-      canvas.width = video.offsetWidth;
-      canvas.height = video.offsetWidth;
+      canvas.width = video.clientWidth;
+      canvas.height = video.clientHeight;
       return canvas.getContext("2d");
     }
 
