@@ -57,9 +57,9 @@ export default class QrReader {
     this.onError = options.errorCallback;
 
     // Initialize attributes
-    this._video = this._createVideoElement(videoSelector)
-    this._width = this._video.width;
-    this._height = this._video.height;
+    this._video = this._createVideoElement(videoSelector);
+    this._width =  this._video.clientWidth;
+    this._height =  this._video.clientHeight;
     this._context = this._createContext2D(this._video);
 
     if (this._startOnCreate) {
@@ -101,8 +101,8 @@ export default class QrReader {
    */
   _createContext2D(video) {
     let canvas = document.createElement("canvas");
-    canvas.width = video.width;
-    canvas.height = video.height;
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
     return canvas.getContext("2d");
   }
 
@@ -121,6 +121,7 @@ export default class QrReader {
    */
   _onMediaStreamError(e) {
     console.error(e);
+    this.onError(e);
   }
 
   /**

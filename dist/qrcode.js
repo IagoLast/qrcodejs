@@ -6221,7 +6221,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * reader.start(); // Start reading
  * reader.stop(); // Stop streams and video.
  */
-
 var QrReader = function () {
   /**
    * Instantiate a QrReader object.
@@ -6232,7 +6231,6 @@ var QrReader = function () {
    * @param {boolean} options.stopOnRead - When this flag is activated the detector will stop once a qrcode was readed sucessfully.
    * @param {boolean} options.startOnCreate - When this flag is activated the detector will start when instantiated.
    */
-
   function QrReader(options) {
     _classCallCheck(this, QrReader);
 
@@ -6263,8 +6261,8 @@ var QrReader = function () {
 
     // Initialize attributes
     this._video = this._createVideoElement(videoSelector);
-    this._width = this._video.width;
-    this._height = this._video.height;
+    this._width = this._video.clientWidth;
+    this._height = this._video.clientHeight;
     this._context = this._createContext2D(this._video);
 
     if (this._startOnCreate) {
@@ -6319,8 +6317,8 @@ var QrReader = function () {
     key: '_createContext2D',
     value: function _createContext2D(video) {
       var canvas = document.createElement("canvas");
-      canvas.width = video.width;
-      canvas.height = video.height;
+      canvas.width = video.clientWidth;
+      canvas.height = video.clientHeight;
       return canvas.getContext("2d");
     }
 
@@ -6345,6 +6343,7 @@ var QrReader = function () {
     key: '_onMediaStreamError',
     value: function _onMediaStreamError(e) {
       console.error(e);
+      this.onError(e);
     }
 
     /**
