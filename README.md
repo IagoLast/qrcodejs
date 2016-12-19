@@ -16,7 +16,7 @@ Install the library using:
 Use it from the html.
 
   ```html
-      <script src="bower_componets/dist/qrcode.js"></script>
+      <script src="bower_components/qrcodejs/dist/qrcode.js"></script>
   ```
 
 ## Using Npm

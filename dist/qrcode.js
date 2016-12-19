@@ -1470,183 +1470,161 @@ function DataMask111() {
 DataMask.DATA_MASKS = new Array(new DataMask000(), new DataMask001(), new DataMask010(), new DataMask011(), new DataMask100(), new DataMask101(), new DataMask110(), new DataMask111());
 
 /*
-  Ported to JavaScript by Lazar Laszlo 2011 
-  
+  Ported to JavaScript by Lazar Laszlo 2011
+
   lazarsoft@gmail.com, www.lazarsoft.info
-  
+
 */
 
 /*
-*
-* Copyright 2007 ZXing authors
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ *
+ * Copyright 2007 ZXing authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 
-function ReedSolomonDecoder(field)
-{
+function ReedSolomonDecoder(field) {
 	this.field = field;
-	this.decode=function(received,  twoS)
-	{
-			var poly = new GF256Poly(this.field, received);
-			var syndromeCoefficients = new Array(twoS);
-			for(var i=0;i<syndromeCoefficients.length;i++)syndromeCoefficients[i]=0;
-			var dataMatrix = false;//this.field.Equals(GF256.DATA_MATRIX_FIELD);
-			var noError = true;
-			for (var i = 0; i < twoS; i++)
-			{
-				// Thanks to sanfordsquires for this fix:
-				var eval = poly.evaluateAt(this.field.exp(dataMatrix?i + 1:i));
-				syndromeCoefficients[syndromeCoefficients.length - 1 - i] = eval;
-				if (eval != 0)
-				{
-					noError = false;
-				}
+
+	this.decode = function(received, twoS) {
+		var poly = new GF256Poly(this.field, received);
+		var syndromeCoefficients = new Array(twoS);
+		for (var i = 0; i < syndromeCoefficients.length; i++) syndromeCoefficients[i] = 0;
+		var dataMatrix = false; //this.field.Equals(GF256.DATA_MATRIX_FIELD);
+		var noError = true;
+		for (var i = 0; i < twoS; i++) {
+			// Thanks to sanfordsquires for this fix:
+			var eval = poly.evaluateAt(this.field.exp(dataMatrix ? i + 1 : i));
+			syndromeCoefficients[syndromeCoefficients.length - 1 - i] = eval;
+			if (eval != 0) {
+				noError = false;
 			}
-			if (noError)
-			{
-				return ;
+		}
+		if (noError) {
+			return;
+		}
+		var syndrome = new GF256Poly(this.field, syndromeCoefficients);
+		var sigmaOmega = this.runEuclideanAlgorithm(this.field.buildMonomial(twoS, 1), syndrome, twoS);
+		var sigma = sigmaOmega[0];
+		var omega = sigmaOmega[1];
+		var errorLocations = this.findErrorLocations(sigma);
+		var errorMagnitudes = this.findErrorMagnitudes(omega, errorLocations, dataMatrix);
+		for (var i = 0; i < errorLocations.length; i++) {
+			var position = received.length - 1 - this.field.log(errorLocations[i]);
+			if (position < 0) {
+				throw "ReedSolomonException Bad error location";
 			}
-			var syndrome = new GF256Poly(this.field, syndromeCoefficients);
-			var sigmaOmega = this.runEuclideanAlgorithm(this.field.buildMonomial(twoS, 1), syndrome, twoS);
-			var sigma = sigmaOmega[0];
-			var omega = sigmaOmega[1];
-			var errorLocations = this.findErrorLocations(sigma);
-			var errorMagnitudes = this.findErrorMagnitudes(omega, errorLocations, dataMatrix);
-			for (var i = 0; i < errorLocations.length; i++)
-			{
-				var position = received.length - 1 - this.field.log(errorLocations[i]);
-				if (position < 0)
-				{
-					throw "ReedSolomonException Bad error location";
-				}
-				received[position] = GF256.addOrSubtract(received[position], errorMagnitudes[i]);
-			}
+			received[position] = GF256.addOrSubtract(received[position], errorMagnitudes[i]);
+		}
 	}
-	
-	this.runEuclideanAlgorithm=function( a,  b,  R)
-		{
-			// Assume a's degree is >= b's
-			if (a.Degree < b.Degree)
-			{
-				var temp = a;
-				a = b;
-				b = temp;
-			}
-			
-			var rLast = a;
-			var r = b;
-			var sLast = this.field.One;
-			var s = this.field.Zero;
-			var tLast = this.field.Zero;
-			var t = this.field.One;
-			
-			// Run Euclidean algorithm until r's degree is less than R/2
-			while (r.Degree >= Math.floor(R / 2))
-			{
-				var rLastLast = rLast;
-				var sLastLast = sLast;
-				var tLastLast = tLast;
-				rLast = r;
-				sLast = s;
-				tLast = t;
-				
-				// Divide rLastLast by rLast, with quotient in q and remainder in r
-				if (rLast.Zero)
-				{
-					// Oops, Euclidean algorithm already terminated?
-					throw "r_{i-1} was zero";
-				}
-				r = rLastLast;
-				var q = this.field.Zero;
-				var denominatorLeadingTerm = rLast.getCoefficient(rLast.Degree);
-				var dltInverse = this.field.inverse(denominatorLeadingTerm);
-				while (r.Degree >= rLast.Degree && !r.Zero)
-				{
-					var degreeDiff = r.Degree - rLast.Degree;
-					var scale = this.field.multiply(r.getCoefficient(r.Degree), dltInverse);
-					q = q.addOrSubtract(this.field.buildMonomial(degreeDiff, scale));
-					r = r.addOrSubtract(rLast.multiplyByMonomial(degreeDiff, scale));
-					//r.EXE();
-				}
-				
-				s = q.multiply1(sLast).addOrSubtract(sLastLast);
-				t = q.multiply1(tLast).addOrSubtract(tLastLast);
-			}
-			
-			var sigmaTildeAtZero = t.getCoefficient(0);
-			if (sigmaTildeAtZero == 0)
-			{
-				throw "ReedSolomonException sigmaTilde(0) was zero";
-			}
-			
-			var inverse = this.field.inverse(sigmaTildeAtZero);
-			var sigma = t.multiply2(inverse);
-			var omega = r.multiply2(inverse);
-			return new Array(sigma, omega);
+	this.runEuclideanAlgorithm = function(a, b, R) {
+		// Assume a's degree is >= b's
+		if (a.Degree < b.Degree) {
+			var temp = a;
+			a = b;
+			b = temp;
 		}
-	this.findErrorLocations=function( errorLocator)
-		{
-			// This is a direct application of Chien's search
-			var numErrors = errorLocator.Degree;
-			if (numErrors == 1)
-			{
-				// shortcut
-				return new Array(errorLocator.getCoefficient(1));
+
+		var rLast = a;
+		var r = b;
+		var sLast = this.field.One;
+		var s = this.field.Zero;
+		var tLast = this.field.Zero;
+		var t = this.field.One;
+
+		// Run Euclidean algorithm until r's degree is less than R/2
+		while (r.Degree >= Math.floor(R / 2)) {
+			var rLastLast = rLast;
+			var sLastLast = sLast;
+			var tLastLast = tLast;
+			rLast = r;
+			sLast = s;
+			tLast = t;
+
+			// Divide rLastLast by rLast, with quotient in q and remainder in r
+			if (rLast.Zero) {
+				// Oops, Euclidean algorithm already terminated?
+				throw "r_{i-1} was zero";
 			}
-			var result = new Array(numErrors);
-			var e = 0;
-			for (var i = 1; i < 256 && e < numErrors; i++)
-			{
-				if (errorLocator.evaluateAt(i) == 0)
-				{
-					result[e] = this.field.inverse(i);
-					e++;
-				}
+			r = rLastLast;
+			var q = this.field.Zero;
+			var denominatorLeadingTerm = rLast.getCoefficient(rLast.Degree);
+			var dltInverse = this.field.inverse(denominatorLeadingTerm);
+			while (r.Degree >= rLast.Degree && !r.Zero) {
+				var degreeDiff = r.Degree - rLast.Degree;
+				var scale = this.field.multiply(r.getCoefficient(r.Degree), dltInverse);
+				q = q.addOrSubtract(this.field.buildMonomial(degreeDiff, scale));
+				r = r.addOrSubtract(rLast.multiplyByMonomial(degreeDiff, scale));
+				//r.EXE();
 			}
-			if (e != numErrors)
-			{
-				throw "Error locator degree does not match number of roots";
-			}
-			return result;
+
+			s = q.multiply1(sLast).addOrSubtract(sLastLast);
+			t = q.multiply1(tLast).addOrSubtract(tLastLast);
 		}
-	this.findErrorMagnitudes=function( errorEvaluator,  errorLocations,  dataMatrix)
-		{
-			// This is directly applying Forney's Formula
-			var s = errorLocations.length;
-			var result = new Array(s);
-			for (var i = 0; i < s; i++)
-			{
-				var xiInverse = this.field.inverse(errorLocations[i]);
-				var denominator = 1;
-				for (var j = 0; j < s; j++)
-				{
-					if (i != j)
-					{
-						denominator = this.field.multiply(denominator, GF256.addOrSubtract(1, this.field.multiply(errorLocations[j], xiInverse)));
-					}
-				}
-				result[i] = this.field.multiply(errorEvaluator.evaluateAt(xiInverse), this.field.inverse(denominator));
-				// Thanks to sanfordsquires for this fix:
-				if (dataMatrix)
-				{
-					result[i] = this.field.multiply(result[i], xiInverse);
+
+		var sigmaTildeAtZero = t.getCoefficient(0);
+		if (sigmaTildeAtZero == 0) {
+			throw "ReedSolomonException sigmaTilde(0) was zero";
+		}
+
+		var inverse = this.field.inverse(sigmaTildeAtZero);
+		var sigma = t.multiply2(inverse);
+		var omega = r.multiply2(inverse);
+		return new Array(sigma, omega);
+	}
+	this.findErrorLocations = function(errorLocator) {
+		// This is a direct application of Chien's search
+		var numErrors = errorLocator.Degree;
+		if (numErrors == 1) {
+			// shortcut
+			return new Array(errorLocator.getCoefficient(1));
+		}
+		var result = new Array(numErrors);
+		var e = 0;
+		for (var i = 1; i < 256 && e < numErrors; i++) {
+			if (errorLocator.evaluateAt(i) == 0) {
+				result[e] = this.field.inverse(i);
+				e++;
+			}
+		}
+		if (e != numErrors) {
+			throw "Error locator degree does not match number of roots";
+		}
+		return result;
+	}
+	this.findErrorMagnitudes = function(errorEvaluator, errorLocations, dataMatrix) {
+		// This is directly applying Forney's Formula
+		var s = errorLocations.length;
+		var result = new Array(s);
+		for (var i = 0; i < s; i++) {
+			var xiInverse = this.field.inverse(errorLocations[i]);
+			var denominator = 1;
+			for (var j = 0; j < s; j++) {
+				if (i != j) {
+					denominator = this.field.multiply(denominator, GF256.addOrSubtract(1, this.field.multiply(errorLocations[j], xiInverse)));
 				}
 			}
-			return result;
+			result[i] = this.field.multiply(errorEvaluator.evaluateAt(xiInverse), this.field.inverse(denominator));
+			// Thanks to sanfordsquires for this fix:
+			if (dataMatrix) {
+				result[i] = this.field.multiply(result[i], xiInverse);
+			}
 		}
+		return result;
+	}
 }
+
 /*
   Ported to JavaScript by Lazar Laszlo 2011 
   
@@ -6192,7 +6170,7 @@ function QRCodeDataBlockReader(blocks, version, numErrorCorrectionCode) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6215,7 +6193,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * options.videoSelector = '.video-preview'; // If you have a video tag with the video preview you can indicate a css selector.
  * options.stopOnRead =  true;  // When this flag is activated the detector will stop once a code was readed sucessfully.
  * options.startOnCreate = false;  // When this flag is activated the detector will start when instantiated.
- *
  * let reader = new QrReader(options);
  *
  * reader.start(); // Start reading
@@ -6223,188 +6200,215 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  */
 
 var QrReader = function () {
-  /**
-   * Instantiate a QrReader object.
-   * @param {object} options - Constructor options.
-   * @param {function} options.sucessCallback - Callback to execute when the detector reads a code.
-   * @param {function} options.errorCallback - Callback to execute when the detector fails reading a code.
-   * @param {string} options.videoSelector -  The detector will use a video element found using the given selector, if undefined it will create his own.
-   * @param {boolean} options.stopOnRead - When this flag is activated the detector will stop once a qrcode was readed sucessfully.
-   * @param {boolean} options.startOnCreate - When this flag is activated the detector will start when instantiated.
+	/**
+  * Instantiate a QrReader object.
+  * @param {object} options - Constructor options.
+  * @param {function} options.sucessCallback - Callback to execute when the detector reads a code.
+  * @param {function} options.errorCallback - Callback to execute when the detector fails reading a code.
+  * @param {string} options.videoSelector -  The detector will use a video element found using the given selector, if undefined it will create his own.
+  * @param {boolean} options.stopOnRead - When this flag is activated the detector will stop once a qrcode was readed sucessfully.
+  * @param {boolean} options.startOnCreate - When this flag is activated the detector will start when instantiated.
+  * @param {deviceId} options.deviceId - Id of the device used for recording video. (Use QrReader.getBackCamera to get the back camera device).
+  */
+
+	function QrReader(options) {
+		_classCallCheck(this, QrReader);
+
+		var videoSelector = options.videoSelector;
+
+		// Initialize default values for atributes
+		this._stopOnRead = options.stopOnRead;
+		this._video = null;
+		this._context = null;
+		this._mediaStream = null;
+		this._stopped = false;
+		this._defaultHeight = 480;
+		this._defaultWidth = 640;
+		this._deviceId = options.deviceId;
+		this._startOnCreate = options.startOnCreate || true;
+
+		/**
+   * Callback to run when a qr code is decoded.
+   * @param {string} data - The decoded string obtained from the qr code.
    */
+		this.onSuccess = options.sucessCallback;
 
-  function QrReader(options) {
-    _classCallCheck(this, QrReader);
+		/**
+   * Callback to run when an error happens trying to decode a code.
+   * @param {Error} error - The error.
+   */
+		this.onError = options.errorCallback;
 
-    var videoSelector = options.videoSelector;
+		// Initialize attributes
+		this._video = this._createVideoElement(videoSelector);
+		this._width = this._video.width;
+		this._height = this._video.height;
+		this._context = this._createContext2D(this._video);
 
-    // Initialize default values for atributes
-    this._stopOnRead = options.stopOnRead;
-    this._video = null;
-    this._context = null;
-    this._mediaStream = null;
-    this._stopped = false;
-    this._defaultHeight = 480;
-    this._defaultWidth = 640;
-    this._facingMode = options.facingMode || 'environment';
-    this._startOnCreate = options.startOnCreate || true;
+		if (this._startOnCreate) {
+			this.start();
+		}
+	}
 
-    /**
-     * Callback to run when a qr code is decoded.
-     * @param {string} data - The decoded string obtained from the qr code.
-     */
-    this.onSuccess = options.sucessCallback;
+	/**
+  * Return a promise resolved with the back camera object.
+  */
 
-    /**
-     * Callback to run when an error happens trying to decode a code.
-     * @param {Error} error - The error.
-     */
-    this.onError = options.errorCallback;
 
-    // Initialize attributes
-    this._video = this._createVideoElement(videoSelector);
-    this._width = this._video.width;
-    this._height = this._video.height;
-    this._context = this._createContext2D(this._video);
+	_createClass(QrReader, [{
+		key: 'start',
 
-    if (this._startOnCreate) {
-      this.start();
-    }
-  }
 
-  /**
+		/**
    * Start reading video from the video-camera decoding each frame.
    */
+		value: function start() {
+			var constraints = {
+				video: {
+					height: this._defaultHeight,
+					width: this._defaultWidth
+				}
+			};
+			if (this._deviceId) {
+				constraints.deviceId = this._deviceId;
+			}
+			navigator.getUserMedia(constraints, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
+		}
 
+		/**
+   * Stop video streams.
+   */
 
-  _createClass(QrReader, [{
-    key: 'start',
-    value: function start() {
-      var constraints = { video: { height: this._defaultHeight, width: this._defaultWidth, facingMode: this._facingMode } };
-      navigator.getUserMedia(constraints, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
-    }
+	}, {
+		key: 'stop',
+		value: function stop() {
+			this._stopStreams();
+		}
 
-    /**
-     * Stop video streams.
-     */
+		/**
+   * Return the existing video or create a new one from scratch.
+   */
 
-  }, {
-    key: 'stop',
-    value: function stop() {
-      this._stopStreams();
-    }
+	}, {
+		key: '_createVideoElement',
+		value: function _createVideoElement(videoSelector) {
+			if (videoSelector) {
+				return document.querySelector(videoSelector);
+			} else {
+				var video = document.createElement('video');
+				video.setAttribute('width', this._defaultWidth);
+				video.setAttribute('height', this._defaultHeight);
+				return video;
+			}
+		}
 
-    /**
-     * Return the existing video or create a new one from scratch.
-     */
+		/**
+   * Return a 2D context with the same size of the video.
+   */
 
-  }, {
-    key: '_createVideoElement',
-    value: function _createVideoElement(videoSelector) {
-      if (videoSelector) {
-        return document.querySelector(videoSelector);
-      } else {
-        var video = document.createElement('video');
-        video.setAttribute('width', this._defaultWidth);
-        video.setAttribute('height', this._defaultHeight);
-        return video;
-      }
-    }
+	}, {
+		key: '_createContext2D',
+		value: function _createContext2D(video) {
+			var canvas = document.createElement("canvas");
+			canvas.width = video.width;
+			canvas.height = video.height;
+			return canvas.getContext("2d");
+		}
 
-    /**
-     * Return a 2D context with the same size of the video.
-     */
+		/**
+   * Callback to run when the videoStream is obtained.
+   */
 
-  }, {
-    key: '_createContext2D',
-    value: function _createContext2D(video) {
-      var canvas = document.createElement("canvas");
-      canvas.width = video.width;
-      canvas.height = video.height;
-      return canvas.getContext("2d");
-    }
+	}, {
+		key: '_onMediaStream',
+		value: function _onMediaStream(stream) {
+			this._mediaStream = stream;
+			this._video.src = URL.createObjectURL(stream);
+			this._video.play();
+			requestAnimationFrame(this._onAnimationFrameRequested.bind(this));
+		}
 
-    /**
-     * Callback to run when the videoStream is obtained.
-     */
+		/**
+   * Callback to run when error on get mediastream.
+   */
 
-  }, {
-    key: '_onMediaStream',
-    value: function _onMediaStream(stream) {
-      this._mediaStream = stream;
-      this._video.src = URL.createObjectURL(stream);
-      this._video.play();
-      requestAnimationFrame(this._onAnimationFrameRequested.bind(this));
-    }
+	}, {
+		key: '_onMediaStreamError',
+		value: function _onMediaStreamError(e) {
+			console.error(e);
+		}
 
-    /**
-     * Callback to run when error on get mediastream.
-     */
+		/**
+   * Main Loop, get a frame from video and put it into canvas
+   */
 
-  }, {
-    key: '_onMediaStreamError',
-    value: function _onMediaStreamError(e) {
-      console.error(e);
-    }
+	}, {
+		key: '_onAnimationFrameRequested',
+		value: function _onAnimationFrameRequested() {
+			if (this._stopped) {
+				return;
+			}
+			this._context.drawImage(this._video, 0, 0, this._width, this._height);
+			var frame = this._context.getImageData(0, 0, this._width, this._height);
+			this._decode(frame);
+			requestAnimationFrame(this._onAnimationFrameRequested.bind(this));
+		}
 
-    /**
-     * Main Loop, get a frame from video and put it into canvas
-     */
+		/**
+   *
+   */
 
-  }, {
-    key: '_onAnimationFrameRequested',
-    value: function _onAnimationFrameRequested() {
-      if (this._stopped) {
-        return;
-      }
-      this._context.drawImage(this._video, 0, 0, this._width, this._height);
-      var frame = this._context.getImageData(0, 0, this._width, this._height);
-      this._decode(frame);
-      requestAnimationFrame(this._onAnimationFrameRequested.bind(this));
-    }
+	}, {
+		key: '_decode',
+		value: function _decode(frame) {
+			var result = '';
+			try {
+				result = qrcode.decode(frame);
+			} catch (e) {
+				if (this._isExpectedError(e)) {
+					return;
+				} else {
+					console.error('Unexpected error: ', e);
+					this.onError(e);
+				}
+			}
+			if (result !== '' && this._stopOnRead) {
+				this._stopStreams();
+			}
+			if (result !== '') {
+				this.onSuccess(result);
+			}
+		}
+	}, {
+		key: '_isExpectedError',
+		value: function _isExpectedError(e) {
+			return String(e).indexOf("Couldn't find enough") >= 0;
+		}
+	}, {
+		key: '_stopStreams',
+		value: function _stopStreams() {
+			this._stopped = true;
+			this._video.pause();
+			this._mediaStream.getVideoTracks().forEach(function (videoTrack) {
+				videoTrack.stop();
+			});
+		}
+	}], [{
+		key: 'getBackCamera',
+		value: function getBackCamera() {
+			return navigator.mediaDevices.enumerateDevices().then(function (devices) {
+				devices = devices.filter(function (d) {
+					return d.kind === 'videoinput';
+				});
+				var back = devices.find(function (d) {
+					return d.label.toLowerCase().includes('back');
+				});
+				return back ? back : devices.shift();
+			});
+		}
+	}]);
 
-    /**
-     *
-     */
-
-  }, {
-    key: '_decode',
-    value: function _decode(frame) {
-      var result = '';
-      try {
-        result = qrcode.decode(frame);
-      } catch (e) {
-        if (this._isExpectedError(e)) {
-          return;
-        } else {
-          console.error('Unexpected error: ', e);
-          this.onError(e);
-        }
-      }
-      if (result !== '' && this._stopOnRead) {
-        this._stopStreams();
-      }
-      if (result !== '') {
-        this.onSuccess(result);
-      }
-    }
-  }, {
-    key: '_isExpectedError',
-    value: function _isExpectedError(e) {
-      return String(e).indexOf("Couldn't find enough") >= 0;
-    }
-  }, {
-    key: '_stopStreams',
-    value: function _stopStreams() {
-      this._stopped = true;
-      this._video.pause();
-      this._mediaStream.getVideoTracks().forEach(function (videoTrack) {
-        videoTrack.stop();
-      });
-    }
-  }]);
-
-  return QrReader;
+	return QrReader;
 }();
 
 exports.default = QrReader;
