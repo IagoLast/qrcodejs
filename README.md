@@ -52,20 +52,24 @@ This code creates a webcam canvas which border will turn green when a code is re
   <video width="320px" height="240px" id="video" autoplay></video>
 </body>
 <script>
-function onSuccess(data) {
-  document.getElementById('video').setAttribute("style", "border: 3px solid #52e250");
-  console.log('Sucess:', data);
-}
+	function onSuccess(data) {
+		document.getElementById('video').setAttribute("style", "border: 3px solid #52e250");
+		console.log('Sucess:', data);
+	}
 
-function onError(err) {
-  console.error(err);
-}
-var qr = new QrReader({
-  sucessCallback: onSuccess,
-  errorCallback: onError,
-  videoSelector: '#video',
-  stopOnRead: true,
-});
+	function onError(err) {
+		console.error(err);
+	}
+
+	QrReader.getBackCamera().then(function(device) {
+		new QrReader({
+			sucessCallback: onSuccess,
+			errorCallback: onError,
+			videoSelector: '#video',
+			stopOnRead: true,
+			deviceId: device.deviceId,
+		});
+	});
 </script>
 
 </html>
