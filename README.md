@@ -63,11 +63,11 @@ This code creates a webcam canvas which border will turn green when a code is re
 
 	QrReader.getBackCamera().then(function(device) {
 		new QrReader({
-			sucessCallback: onSuccess,
-			errorCallback: onError,
-			videoSelector: '#video',
-			stopOnRead: true,
-			deviceId: device.deviceId,
+			sucessCallback: onSuccess, // Required
+			errorCallback: onError, // Required
+			videoSelector: '#video', // If not provided creates an invisible element and decode in background
+			stopOnRead: true, // Default false, When true the video will stop once the first QR is read.
+			deviceId: device.deviceId, // Id of the device used for recording video.
 		});
 	});
 </script>
