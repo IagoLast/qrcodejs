@@ -90,7 +90,7 @@ export default class QrReader {
 			}
 		};
 		if (this._deviceId) {
-			constraints.deviceId = this._deviceId;
+			constraints.video.deviceId = this._deviceId;
 		}
 		navigator.getUserMedia(constraints, this._onMediaStream.bind(this), this._onMediaStreamError.bind(this));
 	}
