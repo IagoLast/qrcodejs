@@ -1,6 +1,6 @@
 {
   "name": "qrcode-reader.js",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Javascript library to read QR codes in the browser",
   "main": "dist/qrcode.js",
   "scripts": {
